@@ -1,7 +1,7 @@
-#TimeGoals
-##About
+# TimeGoals
+## About
 TBD
-##Authors
+## Authors
 Maciej Czeszko
 Szymon Kosiński
 Paweł "Nicku" Nic
