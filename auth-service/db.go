@@ -5,7 +5,6 @@ import (
 	"fmt"
 	_ "github.com/lib/pq"
 	"log"
-	"strconv"
 )
 
 var db *sql.DB
@@ -26,15 +25,6 @@ func DbInit() {
 	}
 	log.Printf("Database connection opened.")
 	db = init
-	rows, err := db.Query(`SELECT "column" FROM "test"`)
-
-	var test int
-	rows.Next()
-	err = rows.Scan(&test)
-	if err != nil {
-		panic(err)
-	}
-	log.Printf(strconv.Itoa(test))
 }
 
 func DbClose() {

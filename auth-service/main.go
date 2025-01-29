@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
@@ -161,7 +162,11 @@ func loginToAccount(c *gin.Context) {
 
 	pass, _ := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
 
-	if request.Username != acc.Username || string(pass) != acc.Password {
+	print(string(pass))
+	print("\n")
+	print(acc.Password)
+
+	if request.Username != acc.Username || bcrypt.CompareHashAndPassword([]byte(acc.Password), []byte(request.Password)) != nil {
 		var response = errorResponse{
 			Error:   true,
 			Message: "Invalid credentials",
@@ -182,6 +187,12 @@ func loginToAccount(c *gin.Context) {
 
 func main() {
 	router := gin.Default()
+
+	router.Use(cors.New(cors.Config{
+		AllowAllOrigins: true,
+		AllowMethods:    []string{"GET", "POST", "PUT", "PATCH", "DELETE"},
+		AllowHeaders:    []string{"Origin", "Content-Length", "Content-Type", "Authorization", "access-control-allow-origin"},
+	}))
 
 	// Account
 	router.GET("/account/:id", getAccount)
