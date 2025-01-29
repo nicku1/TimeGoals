@@ -17,7 +17,7 @@ type accountPost struct {
 }
 
 type accountPut struct {
-	Username string  `json:"u2sername"`
+	Username string  `json:"username"`
 	Password string  `json:"password"`
 	Email    string  `json:"email"`
 	Suspend  suspend `json:"suspend"`
