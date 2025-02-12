@@ -118,8 +118,25 @@ public class RaportsApiController implements RaportsApi {
 
     public ResponseEntity<Void> raportsRaportIdDelete(@Parameter(in = ParameterIn.PATH, description = "", required=true, schema=@Schema()) @PathVariable("raportId") Integer raportId
 ) {
-        String accept = request.getHeader("Accept");
-        return new ResponseEntity<Void>(HttpStatus.NOT_IMPLEMENTED);
+        String query = "DELETE FROM raports WHERE raportid = ?;";
+        try (Connection connection = DriverManager.getConnection("jdbc:mariadb://192.168.221.133:3306/TimeGoals?user=kochammichalka&password=JARANIE420");
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            // Ustawienie parametrów dla zapytania
+            preparedStatement.setString(1, raportId.toString());
+
+            // Wykonanie zapytania
+            int rowsAffected = preparedStatement.executeUpdate();
+
+            if (rowsAffected > 0) {
+                return new ResponseEntity<>(HttpStatus.OK); // Zwracamy 201 Created, jeśli dodano rekord
+            } else {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // Błąd, jeśli nie dodano rekordu
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR); // Błąd serwera
+        }
     }
 
     public ResponseEntity<Raport> raportsRaportIdGet(@Parameter(in = ParameterIn.PATH, description = "", required=true, schema=@Schema()) @PathVariable("raportId") Integer raportId) {
@@ -152,11 +169,11 @@ public class RaportsApiController implements RaportsApi {
         }
     }
 
-    public ResponseEntity<Void> raportsRaportIdPut(@Parameter(in = ParameterIn.PATH, description = "", required=true, schema=@Schema()) @PathVariable("raportId") Integer raportId
+ /*   public ResponseEntity<Void> raportsRaportIdPut(@Parameter(in = ParameterIn.PATH, description = "", required=true, schema=@Schema()) @PathVariable("raportId") Integer raportId
 ,@Parameter(in = ParameterIn.DEFAULT, description = "Updated raport object", required=true, schema=@Schema()) @Valid @RequestBody Raport body
 ) {
         String accept = request.getHeader("Accept");
         return new ResponseEntity<Void>(HttpStatus.NOT_IMPLEMENTED);
     }
-
+*/
 }

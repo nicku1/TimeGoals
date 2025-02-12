@@ -75,16 +75,7 @@ public interface RaportsApi {
     ResponseEntity<Raport> raportsRaportIdGet(@Parameter(in = ParameterIn.PATH, description = "", required=true, schema=@Schema()) @PathVariable("raportId") Integer raportId
 );
 
-
-    @Operation(summary = "Update an existing raport", description = "", tags={  })
-    @ApiResponses(value = { 
-        @ApiResponse(responseCode = "200", description = "Raport updated successfully") })
-    @RequestMapping(value = "/raports/{raportId}",
-        consumes = { "application/json" }, 
-        method = RequestMethod.PUT)
-    ResponseEntity<Void> raportsRaportIdPut(@Parameter(in = ParameterIn.PATH, description = "", required=true, schema=@Schema()) @PathVariable("raportId") Integer raportId
-, @Parameter(in = ParameterIn.DEFAULT, description = "Updated raport object", required=true, schema=@Schema()) @Valid @RequestBody Raport body
-);
+    
 
 }
 

@@ -2,17 +2,14 @@ package io.swagger.model;
 
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.threeten.bp.LocalDate;
+import java.time.LocalDateTime;
 import org.springframework.validation.annotation.Validated;
-import org.openapitools.jackson.nullable.JsonNullable;
 import io.swagger.configuration.NotUndefined;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 import javax.validation.Valid;
-import javax.validation.constraints.*;
 
 /**
  * Event
@@ -33,13 +30,13 @@ public class Event   {
 
   @JsonInclude(JsonInclude.Include.NON_ABSENT)  // Exclude from JSON if absent
   @JsonSetter(nulls = Nulls.FAIL)    // FAIL setting if the value is null
-  private LocalDate startdate = null;
+  private LocalDateTime startdate = null;
 
   @JsonProperty("endtime")
 
   @JsonInclude(JsonInclude.Include.NON_ABSENT)  // Exclude from JSON if absent
   @JsonSetter(nulls = Nulls.FAIL)    // FAIL setting if the value is null
-  private LocalDate endtime = null;
+  private LocalDateTime endtime = null;
 
   @JsonProperty("eventname")
 
@@ -83,7 +80,7 @@ public class Event   {
     this.eventid = eventid;
   }
 
-  public Event startdate(LocalDate startdate) { 
+  public Event startdate(LocalDateTime startdate) {
 
     this.startdate = startdate;
     return this;
@@ -97,17 +94,17 @@ public class Event   {
   @Schema(description = "")
   
 @Valid
-  public LocalDate getStartdate() {  
+  public LocalDateTime getStartdate() {
     return startdate;
   }
 
 
 
-  public void setStartdate(LocalDate startdate) { 
+  public void setStartdate(LocalDateTime startdate) {
     this.startdate = startdate;
   }
 
-  public Event endtime(LocalDate endtime) { 
+  public Event endtime(LocalDateTime endtime) {
 
     this.endtime = endtime;
     return this;
@@ -121,13 +118,13 @@ public class Event   {
   @Schema(description = "")
   
 @Valid
-  public LocalDate getEndtime() {  
+  public LocalDateTime getEndtime() {
     return endtime;
   }
 
 
 
-  public void setEndtime(LocalDate endtime) { 
+  public void setEndtime(LocalDateTime endtime) {
     this.endtime = endtime;
   }
 
