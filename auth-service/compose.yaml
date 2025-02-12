@@ -1,0 +1,14 @@
+services:
+  auth-service:
+    build: .
+    ports:
+      - "8084:8080"
+  auth-database:
+    image: "postgres:latest"
+    environment:
+      POSTGRES_PASSWORD: Jaranie420
+    ports:
+      - "5432:5432"
+    restart: always
+    volumes:
+      - "/var/lib/postgresql/data"
