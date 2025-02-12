@@ -2,6 +2,7 @@ package io.swagger.api;
 
 import io.swagger.model.Event;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.model.Raport;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -24,11 +25,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.threeten.bp.LocalDate;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.sql.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -77,17 +83,37 @@ public class EventsApiController implements EventsApi {
     }
 
     public ResponseEntity<List<Event>> eventsGet() {
-        String accept = request.getHeader("Accept");
+        String accept = "application/json";
         if (accept != null && accept.contains("application/json")) {
-            try {
-                return new ResponseEntity<List<Event>>(objectMapper.readValue("[ {\n  \"eventid\" : 0,\n  \"endtime\" : \"2000-01-23\",\n  \"description\" : \"description\",\n  \"startdate\" : \"2000-01-23\",\n  \"userid\" : \"userid\",\n  \"eventname\" : \"eventname\"\n}, {\n  \"eventid\" : 0,\n  \"endtime\" : \"2000-01-23\",\n  \"description\" : \"description\",\n  \"startdate\" : \"2000-01-23\",\n  \"userid\" : \"userid\",\n  \"eventname\" : \"eventname\"\n} ]", List.class), HttpStatus.NOT_IMPLEMENTED);
-            } catch (IOException e) {
-                log.error("Couldn't serialize response for content type application/json", e);
-                return new ResponseEntity<List<Event>>(HttpStatus.INTERNAL_SERVER_ERROR);
+            List<Event> events = new ArrayList<>();
+            String query = "SELECT * FROM event;";
+
+            try (Connection connection = DriverManager.getConnection("jdbc:mariadb://192.168.221.133:3306/TimeGoals?user=kochammichalka&password=JARANIE420");
+                 PreparedStatement preparedStatement = connection.prepareStatement(query);
+                 ResultSet resultSet = preparedStatement.executeQuery()) {
+
+                while (resultSet.next()) {
+                    Event event = new Event();
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                    event.setEventid(resultSet.getInt("eventid"));
+                    event.setUserid(resultSet.getString("userid"));
+                    event.setEventname(resultSet.getString("eventname"));
+                    event.setDescription(resultSet.getString("description"));
+                    event.setStartdate(LocalDateTime.parse( resultSet.getString("startdate"),formatter));
+                    event.setEndtime(LocalDateTime.parse( resultSet.getString("endtime"),formatter));
+                    events.add(event);
+                }
+
+                return new ResponseEntity<>(events, HttpStatus.OK);
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
             }
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
         }
 
-        return new ResponseEntity<List<Event>>(HttpStatus.NOT_IMPLEMENTED);
     }
 
     public ResponseEntity<Void> eventsPost(@Parameter(in = ParameterIn.DEFAULT, description = "Event object to be created", required=true, schema=@Schema()) @Valid @RequestBody Event body
