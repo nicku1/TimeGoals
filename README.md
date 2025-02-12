@@ -2,7 +2,8 @@
 ## About
 TBD
 ## Authors
-Maciej Czeszko
-Szymon Kosiński
-Paweł "Nicku" Nic
-Jakub Pajewski
+* Maciej Czeszko
+* Szymon Kosiński
+* Michał Milaniuk
+* Paweł "Nicku" Nic
+* Kuba Niedźwiecki
