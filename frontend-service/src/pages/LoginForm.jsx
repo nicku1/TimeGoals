@@ -33,7 +33,7 @@ export const LoginForm = () => {
         <button
           class="mt-1 border rounded-lg duration-300 hover:bg-blue-600"
           onClick={(e) => {
-            e.preventDefault(), useAuth((node = "auth/login"), loginState);
+            e.preventDefault(), useAuth("auth/login", loginState);
           }}
         >
           Login
