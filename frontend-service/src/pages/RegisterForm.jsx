@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Input } from "../components/input";
+import { Input } from "../components/Input";
 import { useAuth } from "../hooks/useAuth";
 
 export function RegisterForm() {
@@ -43,7 +43,7 @@ export function RegisterForm() {
         <button
           class="border rounded-lg duration-300 hover:bg-blue-600"
           onClick={(e) => {
-            e.preventDefault(), useAuth((node = "account"), registerState);
+            e.preventDefault(), useAuth("account", registerState);
           }}
         >
           Register
