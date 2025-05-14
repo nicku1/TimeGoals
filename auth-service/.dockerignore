@@ -1,0 +1,6 @@
+.idea
+postgres_data
+.gitignore
+compose.yaml
+Dockerfile
+README.md

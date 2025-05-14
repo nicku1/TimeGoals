@@ -1,12 +1,15 @@
 package main
 
 import (
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
+	"database/sql"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var pass, _ = bcrypt.GenerateFromPassword([]byte("Jaranie420"), bcrypt.DefaultCost)
@@ -30,37 +33,46 @@ func getAccount(c *gin.Context) {
 		return
 	}
 
-	pass, _ := bcrypt.GenerateFromPassword([]byte("Jaranie420"), bcrypt.DefaultCost)
+	acc := account{}
 
-	var acc = getAccountSuccess{
-		Account: account{
-			ID:       id,
-			Username: "john",
-			Password: string(pass),
-			Email:    "john@gmail.com",
-			Created:  "2024-12-12 23:43:59",
-			Updated:  "2024-12-13 13:54:12",
-			Suspend: suspend{
-				Active: false,
-				Reason: "",
-			},
-		},
+	var updated sql.NullString
+	var suspend_reason sql.NullString
+
+	row := db.QueryRow("SELECT * FROM users WHERE id = $1", id)
+	// todo: null types like "updated"
+	err = row.Scan(&acc.ID, &acc.Username, &acc.Password, &acc.Email, &acc.Created, &updated, &acc.Suspend.Active, &suspend_reason)
+
+	if updated.Valid {
+		acc.Updated = updated.String
 	}
 
-	c.IndentedJSON(http.StatusOK, acc)
+	if suspend_reason.Valid {
+		acc.Suspend.Reason = suspend_reason.String
+	}
+
+	if err != nil {
+		log.Print(err.Error())
+		c.IndentedJSON(http.StatusNotFound, gin.H{})
+		return
+	}
+
+	response := getAccountSuccess{
+		acc,
+	}
+	c.IndentedJSON(http.StatusOK, response)
 }
 
 func postAccount(c *gin.Context) {
 	var request accountPost
 
 	if err := c.BindJSON(&request); err != nil {
+		log.Printf("Invalid request received in postAccount")
 		c.IndentedJSON(http.StatusBadRequest, gin.H{})
 		return
 	}
 
 	pass, _ := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
 	var account = account{
-		ID:       1, //todo: next id
 		Username: request.Username,
 		Password: string(pass),
 		Email:    request.Email,
@@ -72,16 +84,40 @@ func postAccount(c *gin.Context) {
 		},
 	}
 
+	rows, err := db.Query(
+		"INSERT INTO users (username, password, email, created, updated, suspend_active) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
+		account.Username,
+		account.Password,
+		account.Email,
+		account.Created,
+		account.Updated,
+		0,
+	)
+
+	if err != nil {
+		log.Printf("An error occured while creating new user: %s", err.Error())
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{})
+		return
+	}
+
+	var id int
+	rows.Next()
+	err = rows.Scan(&id)
+	log.Printf("%d", id)
+
+	if err != nil {
+		log.Printf("Error while scanning for ID for created user: %s", err.Error())
+		c.IndentedJSON(http.StatusCreated, gin.H{})
+		return
+	}
+
 	var response = postAccountSuccess{
-		ID:       account.ID,
+		ID:       id,
 		Username: account.Username,
 		Created:  account.Created,
 	}
 
-	//todo: insert to database
-
-	//todo: do not return whole account, just response
-	c.IndentedJSON(http.StatusOK, response)
+	c.IndentedJSON(http.StatusCreated, response)
 }
 
 func putAccount(c *gin.Context) {

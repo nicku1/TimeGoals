@@ -3,14 +3,15 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/lib/pq"
 	"log"
+
+	_ "github.com/lib/pq"
 )
 
 var db *sql.DB
 
 const (
-	host     = "localhost"
+	host     = "auth-service-auth-database-1"
 	port     = 5432
 	user     = "postgres"
 	password = "Jaranie420"
