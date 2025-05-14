@@ -56,30 +56,87 @@ public class EventsApiController implements EventsApi {
 
     public ResponseEntity<Void> eventsEventIdDelete(@Parameter(in = ParameterIn.PATH, description = "", required=true, schema=@Schema()) @PathVariable("eventId") Integer eventId
 ) {
-        String accept = request.getHeader("Accept");
-        return new ResponseEntity<Void>(HttpStatus.NOT_IMPLEMENTED);
+        String query = "DELETE FROM event WHERE eventid = ?;";
+        try (Connection connection = DriverManager.getConnection("jdbc:mariadb://192.168.221.133:3306/TimeGoals?user=kochammichalka&password=JARANIE420");
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            // Ustawienie parametrów dla zapytania
+            preparedStatement.setString(1, eventId.toString());
+
+            // Wykonanie zapytania
+            int rowsAffected = preparedStatement.executeUpdate();
+
+            if (rowsAffected > 0) {
+                return new ResponseEntity<>(HttpStatus.OK); // Zwracamy 201 Created, jeśli dodano rekord
+            } else {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // Błąd, jeśli nie dodano rekordu
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR); // Błąd serwera
+        }
     }
 
     public ResponseEntity<Event> eventsEventIdGet(@Parameter(in = ParameterIn.PATH, description = "", required=true, schema=@Schema()) @PathVariable("eventId") Integer eventId
 ) {
-        String accept = request.getHeader("Accept");
+        String accept = "application/json";
         if (accept != null && accept.contains("application/json")) {
-            try {
-                return new ResponseEntity<Event>(objectMapper.readValue("{\n  \"eventid\" : 0,\n  \"endtime\" : \"2000-01-23\",\n  \"description\" : \"description\",\n  \"startdate\" : \"2000-01-23\",\n  \"userid\" : \"userid\",\n  \"eventname\" : \"eventname\"\n}", Event.class), HttpStatus.NOT_IMPLEMENTED);
-            } catch (IOException e) {
-                log.error("Couldn't serialize response for content type application/json", e);
-                return new ResponseEntity<Event>(HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-        }
+            Event event = new Event();
+            String query = "SELECT * FROM event WHERE eventid = ?;";
 
-        return new ResponseEntity<Event>(HttpStatus.NOT_IMPLEMENTED);
+            try (Connection connection = DriverManager.getConnection("jdbc:mariadb://192.168.221.133:3306/TimeGoals?user=kochammichalka&password=JARANIE420");
+                 PreparedStatement preparedStatement = connection.prepareStatement(query);){
+                preparedStatement.setInt(1, eventId);
+                try(ResultSet resultSet = preparedStatement.executeQuery();) {
+
+                    while (resultSet.next()) {
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                        event.setEventid(resultSet.getInt("eventid"));
+                        event.setUserid(resultSet.getString("userid"));
+                        event.setEventname(resultSet.getString("eventname"));
+                        event.setDescription(resultSet.getString("description"));
+                        event.setStartdate(LocalDateTime.parse( resultSet.getString("startdate"),formatter));
+                        event.setEndtime(LocalDateTime.parse( resultSet.getString("endtime"),formatter));
+                    }
+
+                    return new ResponseEntity<>(event, HttpStatus.OK);
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
+        }
     }
 
     public ResponseEntity<Void> eventsEventIdPut(@Parameter(in = ParameterIn.PATH, description = "", required=true, schema=@Schema()) @PathVariable("eventId") Integer eventId
 ,@Parameter(in = ParameterIn.DEFAULT, description = "Updated event object", required=true, schema=@Schema()) @Valid @RequestBody Event body
 ) {
-        String accept = request.getHeader("Accept");
-        return new ResponseEntity<Void>(HttpStatus.NOT_IMPLEMENTED);
+        String query = "UPDATE event SET startdate = ?,endtime = ?,eventname = ?,description = ?,userid = ? WHERE eventid = ?;";
+
+        try (Connection connection = DriverManager.getConnection("jdbc:mariadb://192.168.221.133:3306/TimeGoals?user=kochammichalka&password=JARANIE420");
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            // Ustawienie parametrów dla zapytania
+            preparedStatement.setString(1, body.getStartdate().toString());
+            preparedStatement.setString(2, body.getEndtime().toString());
+            preparedStatement.setString(3, body.getEventname());
+            preparedStatement.setString(4, body.getDescription());
+            preparedStatement.setString(5, body.getUserid());
+            preparedStatement.setString(6, eventId.toString());
+
+            // Wykonanie zapytania
+            int rowsAffected = preparedStatement.executeUpdate();
+
+            if (rowsAffected > 0) {
+                return new ResponseEntity<>(HttpStatus.OK); // Zwracamy 201 Created, jeśli zmodyfikowano rekord
+            } else {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // Błąd, jeśli nie zmodyfikowano rekordu
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR); // Błąd serwera
+        }
     }
 
     public ResponseEntity<List<Event>> eventsGet() {
@@ -117,9 +174,31 @@ public class EventsApiController implements EventsApi {
     }
 
     public ResponseEntity<Void> eventsPost(@Parameter(in = ParameterIn.DEFAULT, description = "Event object to be created", required=true, schema=@Schema()) @Valid @RequestBody Event body
-) {
-        String accept = request.getHeader("Accept");
-        return new ResponseEntity<Void>(HttpStatus.NOT_IMPLEMENTED);
-    }
+)     {
+        String query = "INSERT INTO event (startdate, endtime, eventname, description, userid) VALUES ( ?, ?, ?, ?, ?);";
 
+        try (Connection connection = DriverManager.getConnection("jdbc:mariadb://192.168.221.133:3306/TimeGoals?user=kochammichalka&password=JARANIE420");
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            // Ustawienie parametrów dla zapytania
+
+            preparedStatement.setString(1, body.getStartdate().toString());
+            preparedStatement.setString(2, body.getEndtime().toString());
+            preparedStatement.setString(3, body.getEventname());
+            preparedStatement.setString(4, body.getDescription());
+            preparedStatement.setString(5, body.getUserid());
+
+            // Wykonanie zapytania
+            int rowsAffected = preparedStatement.executeUpdate();
+
+            if (rowsAffected > 0) {
+                return new ResponseEntity<>(HttpStatus.CREATED); // Zwracamy 201 Created, jeśli dodano rekord
+            } else {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // Błąd, jeśli nie dodano rekordu
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR); // Błąd serwera
+        }
+    }
 }

@@ -1,0 +1,14 @@
+services:
+  reports-service:
+    build: src/main/java/io.swagger/
+    ports:
+      - "8081"
+  auth-database:
+    image: "mysql:latest"
+    environment:
+      MYSQL_ROOT_PASSWORD: Jaranie420
+    ports:
+      - "3306:3306"
+    restart: always
+    volumes:
+      - "./database:/var/lib/mysql"
