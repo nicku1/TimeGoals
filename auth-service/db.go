@@ -77,8 +77,19 @@ func DbGetAccountByLogin(login string) (account, error) {
 }
 
 func DbUpdateAccount(acc account) error {
-	// todo: implement
-	return nil
+	_, err := db.Exec(
+		"UPDATE users SET username = $2, password = $3, email = $4, created = $5, updated = $6, suspend_active = $7, suspend_reason = $8 WHERE id = $1",
+		acc.ID,
+		acc.Username,
+		acc.Password,
+		acc.Email,
+		acc.Created,
+		acc.Updated,
+		acc.Suspend.Active,
+		acc.Suspend.Reason,
+	)
+
+	return err
 }
 
 func DbDeleteAccount(id int) error {
