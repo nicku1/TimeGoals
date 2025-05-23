@@ -12,20 +12,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var pass, _ = bcrypt.GenerateFromPassword([]byte("Jaranie420"), bcrypt.DefaultCost)
-var acc = account{
-	ID:       1,
-	Username: "john",
-	Password: string(pass),
-	Email:    "john@gmail.com",
-	Created:  "2024-12-12 23:43:59",
-	Updated:  "2024-12-13 13:54:12",
-	Suspend: suspend{
-		Active: false,
-		Reason: "",
-	},
-}
-
 func getAccount(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -33,26 +19,17 @@ func getAccount(c *gin.Context) {
 		return
 	}
 
-	acc := account{}
+	acc, err := DbGetAccount(id)
 
-	var updated sql.NullString
-	var suspend_reason sql.NullString
-
-	row := db.QueryRow("SELECT * FROM users WHERE id = $1", id)
-	// todo: null types like "updated"
-	err = row.Scan(&acc.ID, &acc.Username, &acc.Password, &acc.Email, &acc.Created, &updated, &acc.Suspend.Active, &suspend_reason)
-
-	if updated.Valid {
-		acc.Updated = updated.String
-	}
-
-	if suspend_reason.Valid {
-		acc.Suspend.Reason = suspend_reason.String
+	if err == sql.ErrNoRows {
+		log.Print(err.Error())
+		c.IndentedJSON(http.StatusNotFound, gin.H{})
+		return
 	}
 
 	if err != nil {
 		log.Print(err.Error())
-		c.IndentedJSON(http.StatusNotFound, gin.H{})
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{})
 		return
 	}
 
@@ -135,12 +112,11 @@ func putAccount(c *gin.Context) {
 		return
 	}
 
-	if id != acc.ID {
-		var response = errorResponse{
-			Error:   true,
-			Message: "There is no account with that ID: " + c.Param("id"),
-		}
-		c.IndentedJSON(http.StatusBadRequest, response)
+	acc, err := DbGetAccount(id)
+
+	if err == sql.ErrNoRows {
+		// todo: new user logic
+		c.IndentedJSON(http.StatusNotImplemented, gin.H{})
 		return
 	}
 
@@ -154,6 +130,13 @@ func putAccount(c *gin.Context) {
 		Suspend:  request.Suspend,
 	}
 
+	err = DbUpdateAccount(account)
+
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{})
+		return
+	}
+
 	c.IndentedJSON(http.StatusOK, account)
 }
 
@@ -165,12 +148,21 @@ func deleteAccount(c *gin.Context) {
 		return
 	}
 
+	acc, err := DbGetAccount(id)
+
 	if id != acc.ID {
 		var response = errorResponse{
 			Error:   true,
 			Message: "There is no account with that ID: " + c.Param("id"),
 		}
 		c.IndentedJSON(http.StatusBadRequest, response)
+		return
+	}
+
+	err = DbDeleteAccount(id)
+
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{})
 		return
 	}
 
@@ -196,11 +188,21 @@ func loginToAccount(c *gin.Context) {
 		return
 	}
 
-	pass, _ := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
+	acc, err := DbGetAccountByLogin(request.Username)
 
-	print(string(pass))
-	print("\n")
-	print(acc.Password)
+	if err == sql.ErrNoRows {
+		var response = errorResponse{
+			Error:   true,
+			Message: "There is no account with that ID: " + c.Param("id"),
+		}
+		c.IndentedJSON(http.StatusBadRequest, response)
+		return
+	}
+
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{})
+		return
+	}
 
 	if request.Username != acc.Username || bcrypt.CompareHashAndPassword([]byte(acc.Password), []byte(request.Password)) != nil {
 		var response = errorResponse{
@@ -211,10 +213,11 @@ func loginToAccount(c *gin.Context) {
 		return
 	}
 
+	// todo: create new session
 	var session = session{
 		SessionID: "1a2b3c",
-		AccountID: 1,
-		IP:        "127.0.0.1",
+		AccountID: acc.ID,
+		IP:        c.ClientIP(),
 		ValidTo:   "2025-12-12 00:00:00",
 	}
 

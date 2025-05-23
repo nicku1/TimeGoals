@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 
@@ -33,4 +34,68 @@ func DbClose() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func DbGetAccount(id int) (account, error) {
+	acc := account{}
+
+	var updated sql.NullString
+	var suspend_reason sql.NullString
+
+	row := db.QueryRow("SELECT * FROM users WHERE id = $1", id)
+	err := row.Scan(&acc.ID, &acc.Username, &acc.Password, &acc.Email, &acc.Created, &updated, &acc.Suspend.Active, &suspend_reason)
+
+	if updated.Valid {
+		acc.Updated = updated.String
+	}
+
+	if suspend_reason.Valid {
+		acc.Suspend.Reason = suspend_reason.String
+	}
+
+	return acc, err
+}
+
+func DbGetAccountByLogin(login string) (account, error) {
+	acc := account{}
+
+	var updated sql.NullString
+	var suspend_reason sql.NullString
+
+	row := db.QueryRow("SELECT * FROM users WHERE username = $1", login)
+	err := row.Scan(&acc.ID, &acc.Username, &acc.Password, &acc.Email, &acc.Created, &updated, &acc.Suspend.Active, &suspend_reason)
+
+	if updated.Valid {
+		acc.Updated = updated.String
+	}
+
+	if suspend_reason.Valid {
+		acc.Suspend.Reason = suspend_reason.String
+	}
+
+	return acc, err
+}
+
+func DbUpdateAccount(acc account) error {
+	// todo: implement
+	return nil
+}
+
+func DbDeleteAccount(id int) error {
+	result, err := db.Exec("DELETE FROM users WHERE id = $1", id)
+	if err != nil {
+		num_affected, err := result.RowsAffected()
+		if err != nil {
+			return err
+		}
+
+		if num_affected == 0 {
+			log.Print("Executed delete user but no rows affected, this should never happen because validation check for user existance")
+			return errors.New("delete without rows affected")
+		}
+
+		return nil
+	}
+
+	return err
 }
